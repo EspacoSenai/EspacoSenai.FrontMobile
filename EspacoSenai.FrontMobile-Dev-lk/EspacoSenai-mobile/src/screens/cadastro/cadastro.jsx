@@ -1,83 +1,126 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  StyleSheet,
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
-  Dimensions
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
+  Dimensions,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Logo from '../../../assets/logodark.svg';
+import OndaMobile from '../../../assets/ondamobile.svg';
+import OlhoAberto from '../../../assets/olhoAberto.svg';
+import OlhoFechado from '../../../assets/olhoFechado.svg';
+import { signUpUsuario } from '../../service/authService';
 
-// Imports de Assets (Use PNGs se não tiver o transformer de SVG configurado)
-import logo from "../../assets/EspacoSenai.png"; 
-import onda from "../../assets/ondaCadastro.png"; 
-import olhoAberto from "../../assets/olhoAberto.png"; 
-import olhoFechado from "../../assets/olhoFechado.png";
-
-// Import do Service e Modal
-import { signUpUsuario } from "../../service/authService";
-import ModalCodigoVerificacao from "./ModalCodigoVerificacao";
-
-const { width, height } = Dimensions.get("window");
-
-// === Utilitário de Força da Senha ===
 const getForcaSenha = (senha) => {
-  if (!senha) return "";
+  if (!senha) return '';
   const temLetra = /[a-zA-Z]/.test(senha);
   const temNumero = /[0-9]/.test(senha);
   const temEspecial = /[^a-zA-Z0-9]/.test(senha);
-  if (senha.length < 6) return "fraca";
-  if (senha.length >= 6 && temLetra && temNumero && !temEspecial) return "media";
-  if (senha.length >= 8 && temLetra && temNumero && temEspecial) return "forte";
-  return "fraca";
+  if (senha.length < 6) return 'fraca';
+  if (senha.length >= 6 && temLetra && temNumero && !temEspecial) return 'media';
+  if (senha.length >= 8 && temLetra && temNumero && temEspecial) return 'forte';
+  return 'fraca';
 };
 
-export default function Cadastro() {
+const Cadastro = () => {
   const navigation = useNavigation();
-
-  // Refs para controle de foco 
   const nomeRef = useRef(null);
   const emailRef = useRef(null);
-  const telRef = useRef(null);
   const senhaRef = useRef(null);
   const confRef = useRef(null);
 
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmar, setShowConfirmar] = useState(false);
-
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
-
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [erro, setErro] = useState(false);
-  const [mensagemErro, setMensagemErro] = useState("");
-  const [mensagemSucesso, setMensagemSucesso] = useState("");
-  const [forcaSenha, setForcaSenha] = useState("");
-
+  const [mensagemErro, setMensagemErro] = useState('');
+  const [mensagemSucesso, setMensagemSucesso] = useState('');
+  const [forcaSenha, setForcaSenha] = useState('');
   const [loading, setLoading] = useState(false);
+  const [tokenCadastro, setTokenCadastro] = useState('');
 
-  // Fluxo de confirmação (OTP)
-  const [tokenCadastro, setTokenCadastro] = useState("");
-  const [openOtp, setOpenOtp] = useState(false);
+  const dimensions = useMemo(() => {
+    const { width, height } = Dimensions.get('window');
+    const isSmallScreen = width < 360;
+    const isTinyScreen = width < 340;
+
+    const waveHeight = isTinyScreen
+      ? Math.min(height * 0.28, 200)
+      : isSmallScreen
+        ? Math.min(height * 0.32, 240)
+        : Math.min(height * 0.35, 280);
+
+    return {
+      width,
+      height,
+      waveHeight,
+          waveOffset: isTinyScreen
+            ? -Math.max(height * 0.05, 24)
+            : -Math.max(height * 0.06, 40),
+      logoWidth: isTinyScreen
+        ? Math.max(width * 0.34, 100)
+        : Math.min(Math.max(width * 0.42, 135), 190),
+      logoHeight: isTinyScreen
+        ? Math.max(width * 0.34, 100) * 0.5625
+        : Math.min(Math.max(width * 0.42, 135), 190) * 0.5625,
+      logoTop: Platform.OS === 'ios'
+        ? (isTinyScreen ? Math.max(height * 0.03, 24) : Math.max(height * 0.05, 40))
+        : (isTinyScreen ? Math.max(height * 0.025, 20) : Math.max(height * 0.04, 32)),
+      cardPaddingHorizontal: isTinyScreen ? Math.max(width * 0.04, 16) : Math.max(width * 0.05, 20),
+      cardPaddingVertical: isTinyScreen ? 18 : 20,
+      cardMarginTop: Math.max(waveHeight * 0.75, height * 0.34),
+      titleSize: isTinyScreen ? Math.max(width * 0.054, 18) : Math.min(width * 0.06, 26),
+      inputFontSize: isTinyScreen ? 14 : Math.min(width * 0.042, 16),
+      inputPadding: isTinyScreen ? 12 : 14,
+      fieldSpacing: isTinyScreen ? 12 : 14,
+      buttonHeight: isTinyScreen ? 22 : 38,
+      buttonFontSize: isTinyScreen ? 12 : 15,
+      iconSize: isTinyScreen ? 18 : Math.min(width * 0.055, 22),
+    };
+  }, []);
+
+  const abrirModalVerificacao = (token) => {
+    if (!token) return;
+    navigation.navigate('ModalCodigoVerificacao', {
+      token,
+      redirectTo: 'Login',
+    });
+  };
+
+  const getStrengthColor = () => {
+    if (forcaSenha === 'fraca') return '#EF4444';
+    if (forcaSenha === 'media') return '#FBBF24';
+    return '#22C55E';
+  };
+
+  const getStrengthWidth = () => {
+    if (forcaSenha === 'fraca') return '33%';
+    if (forcaSenha === 'media') return '66%';
+    return '100%';
+  };
 
   const handleSubmit = async () => {
     setErro(false);
-    setMensagemErro("");
-    setMensagemSucesso("");
+    setMensagemErro('');
+    setMensagemSucesso('');
 
-    // Validação Básica
-    if (!nome || !email || !senha || !confirmarSenha) {
+    if (tokenCadastro) {
+      abrirModalVerificacao(tokenCadastro);
+      return;
+    }
+
+    if (!nome || !email || !senha || (!tokenCadastro && !confirmarSenha)) {
       setErro(true);
-      setMensagemErro("Preencha todos os campos obrigatórios.");
+      setMensagemErro('Preencha todos os campos obrigatórios.');
       if (!nome) nomeRef.current?.focus();
       else if (!email) emailRef.current?.focus();
       else if (!senha) senhaRef.current?.focus();
@@ -85,16 +128,16 @@ export default function Cadastro() {
       return;
     }
 
-    if (senha !== confirmarSenha) {
+    if (!tokenCadastro && senha !== confirmarSenha) {
       setErro(true);
-      setMensagemErro("As senhas não coincidem.");
+      setMensagemErro('As senhas não coincidem.');
       confRef.current?.focus();
       return;
     }
 
     if (senha.length < 8 || senha.length > 15) {
       setErro(true);
-      setMensagemErro("A senha deve ter entre 8 e 15 caracteres.");
+      setMensagemErro('A senha deve ter entre 8 e 15 caracteres.');
       senhaRef.current?.focus();
       return;
     }
@@ -106,142 +149,222 @@ export default function Cadastro() {
         nome: nome.trim(),
         email: email.trim(),
         senha,
-        tag: telefone.trim() || null,
+        tag: null,
       });
 
       const token = resp?.token ?? null;
-      const msg = resp?.message || "Código enviado para seu e-mail.";
+      const msg = resp?.message || 'Código enviado para seu e-mail.';
 
       if (token) {
         setTokenCadastro(token);
         setMensagemSucesso(msg);
-        setOpenOtp(true);
+        abrirModalVerificacao(token);
       } else {
         setErro(true);
-        setMensagemErro("Erro ao receber token de verificação. Tente novamente.");
+        setMensagemErro('Erro ao receber token de verificação. Tente novamente.');
       }
     } catch (error) {
       setErro(true);
-      setMensagemErro(error?.message || "Não foi possível realizar o cadastro.");
+      setMensagemErro(error?.message || 'Não foi possível realizar o cadastro.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Limpar erro ao corrigir senhas
   useEffect(() => {
-    if (senha === confirmarSenha && erro && !mensagemErro) setErro(false);
+    if (senha === confirmarSenha && erro && !mensagemErro) {
+      setErro(false);
+    }
   }, [senha, confirmarSenha, erro, mensagemErro]);
-
-  // Formatação simples de telefone ao digitar
-  const handleTelefoneChange = (text) => {
-    const numbersOnly = text.replace(/\D/g, "");
-    setTelefone(numbersOnly);
-  };
-
-  // Cores dinâmicas para a barra de força
-  const getStrengthColor = () => {
-    if (forcaSenha === "fraca") return "#EF4444";  
-    if (forcaSenha === "media") return "#FBBF24";  
-    return "#22C55E"; 
-  };
-
-  const getStrengthWidth = () => {
-    if (forcaSenha === "fraca") return "33%";
-    if (forcaSenha === "media") return "66%";
-    return "100%";
-  };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: '#FFF' }}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+      <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: 'center',
+          paddingBottom: 40,
+          minHeight: dimensions.height,
+        }}
       >
-        {/* Onda de fundo */}
-        <View style={styles.waveContainer}>
-          <Image source={onda} style={styles.waveImage} resizeMode="cover" />
+        <View
+          style={{
+            position: 'absolute',
+            top: dimensions.waveOffset,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            zIndex: 0,
+            overflow: 'hidden',
+            width: '100%',
+            height: dimensions.waveHeight,
+          }}
+        >
+          <OndaMobile
+            width={dimensions.width * 1.1}
+            height={dimensions.waveHeight}
+            preserveAspectRatio="xMidYMid slice"
+          />
         </View>
 
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image source={logo} style={styles.logo} resizeMode="contain" />
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            zIndex: 10,
+            top: dimensions.logoTop,
+          }}
+        >
+          <Logo
+            width={dimensions.logoWidth}
+            height={dimensions.logoHeight}
+            preserveAspectRatio="xMidYMid meet"
+          />
         </View>
 
-        {/* Card Branco */}
-        <View style={styles.card}>
-          <Text style={styles.title}>
-            Bem-Vindo(a) ao{"\n"}
-            <Text style={styles.titleHighlight}>EspaçoSenai!</Text>
+        <View
+          style={{
+            width: '90%',
+            maxWidth: 420,
+            marginTop: dimensions.cardMarginTop,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: dimensions.titleSize,
+              fontWeight: '600',
+              textAlign: 'center',
+              marginBottom: dimensions.fieldSpacing,
+              color: '#000',
+              lineHeight: 30,
+            }}
+          >
+            Bem-Vindo(a) ao {'\n'}
+            <Text style={{ fontWeight: '700' }}>EspaçoSenai!</Text>
           </Text>
 
-          {/* Mensagens de Feedback */}
-          {!!mensagemErro && <Text style={styles.errorText}>{mensagemErro}</Text>}
-          {!!mensagemSucesso && <Text style={styles.successText}>{mensagemSucesso}</Text>}
+          <View
+            style={{
+              width: '100%',
+              backgroundColor: '#FFF',
+              borderRadius: 16,
+              paddingHorizontal: dimensions.cardPaddingHorizontal,
+              paddingVertical: dimensions.cardPaddingVertical,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.12,
+              shadowRadius: 18,
+              elevation: 10,
+            }}
+          >
+            {!!mensagemErro && (
+              <Text
+                style={{
+                  color: '#DC2626',
+                  fontSize: 14,
+                  textAlign: 'center',
+                  marginBottom: 12,
+                }}
+              >
+                {mensagemErro}
+              </Text>
+            )}
 
-          {/* === Formulário === */}
-          
-          {/* Nome */}
-          <TextInput
-            ref={nomeRef}
-            placeholder="Nome"
-            placeholderTextColor="#666"
-            style={[styles.input, erro && !nome && styles.inputError]}
-            value={nome}
-            onChangeText={setNome}
-            editable={!tokenCadastro}
-            returnKeyType="next"
-            onSubmitEditing={() => emailRef.current?.focus()}
-            blurOnSubmit={false}
-          />
+            {!!mensagemSucesso && (
+              <Text
+                style={{
+                  color: '#16A34A',
+                  fontSize: 14,
+                  textAlign: 'center',
+                  marginBottom: 12,
+                }}
+              >
+                {mensagemSucesso}
+              </Text>
+            )}
 
-          {/* Email */}
+            <TextInput
+              ref={nomeRef}
+              placeholder="Nome"
+              placeholderTextColor="#666"
+              style={{
+                backgroundColor: '#F5F5F5',
+                borderColor: erro && !nome ? '#DC2626' : 'transparent',
+                borderWidth: erro && !nome ? 1 : 0,
+                borderRadius: 12,
+                paddingHorizontal: 16,
+                paddingVertical: dimensions.inputPadding,
+                fontSize: dimensions.inputFontSize,
+                color: '#000',
+                marginBottom: dimensions.fieldSpacing,
+              }}
+              value={nome}
+              onChangeText={setNome}
+              editable={!tokenCadastro}
+              returnKeyType="next"
+              onSubmitEditing={() => emailRef.current?.focus()}
+              blurOnSubmit={false}
+            />
+
           <TextInput
             ref={emailRef}
             placeholder="Email"
             placeholderTextColor="#666"
-            style={[styles.input, erro && !email && styles.inputError]}
+            style={{
+              backgroundColor: '#F5F5F5',
+              borderColor: erro && !email ? '#DC2626' : 'transparent',
+              borderWidth: erro && !email ? 1 : 0,
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: dimensions.inputPadding,
+              fontSize: dimensions.inputFontSize,
+              color: '#000',
+              marginBottom: dimensions.fieldSpacing,
+            }}
             value={email}
-            onChangeText={(t) => setEmail(t.trim())} 
+            onChangeText={(text) => setEmail(text.trim())}
             editable={!tokenCadastro}
             keyboardType="email-address"
             autoCapitalize="none"
-            returnKeyType="next"
-            onSubmitEditing={() => telRef.current?.focus()}
-            blurOnSubmit={false}
-          />
-
-          {/* Telefone */}
-          <TextInput
-            ref={telRef}
-            placeholder="Telefone (DDD + Núm)"
-            placeholderTextColor="#666"
-            style={[styles.input, erro && !telefone && styles.inputError]}
-            value={telefone}
-            onChangeText={handleTelefoneChange}
-            editable={!tokenCadastro}
-            keyboardType="numeric"
-            maxLength={11}
             returnKeyType="next"
             onSubmitEditing={() => senhaRef.current?.focus()}
             blurOnSubmit={false}
           />
 
-          {/* Senha */}
-          <View style={[styles.passwordContainer, erro && styles.borderError]}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#F5F5F5',
+              borderColor: erro && !senha ? '#DC2626' : 'transparent',
+              borderWidth: erro && !senha ? 1 : 0,
+              borderRadius: 12,
+              marginBottom: 16,
+            }}
+          >
             <TextInput
               ref={senhaRef}
               placeholder="Senha"
               placeholderTextColor="#666"
-              style={styles.inputPassword}
+              style={{
+                flex: 1,
+                paddingHorizontal: 16,
+                paddingVertical: dimensions.inputPadding,
+                fontSize: dimensions.inputFontSize,
+                color: '#000',
+              }}
               value={senha}
-              onChangeText={(v) => {
-                setSenha(v);
-                setForcaSenha(getForcaSenha(v));
+              onChangeText={(value) => {
+                setSenha(value);
+                setForcaSenha(getForcaSenha(value));
               }}
               editable={!tokenCadastro}
               secureTextEntry={!showSenha}
@@ -250,44 +373,85 @@ export default function Cadastro() {
               onSubmitEditing={() => confRef.current?.focus()}
               blurOnSubmit={false}
             />
-            <TouchableOpacity onPress={() => setShowSenha(!showSenha)} style={styles.eyeIcon}>
-              <Image 
-                source={showSenha ? olhoAberto : olhoFechado} 
-                style={styles.iconImage} 
-              />
+            <TouchableOpacity
+              onPress={() => setShowSenha(!showSenha)}
+              style={{ padding: 14 }}
+            >
+              {showSenha ? (
+                <OlhoAberto width={dimensions.iconSize} height={dimensions.iconSize} />
+              ) : (
+                <OlhoFechado width={dimensions.iconSize} height={dimensions.iconSize} />
+              )}
             </TouchableOpacity>
           </View>
 
-          {/* Indicador de Força de Senha */}
           {senha.length > 0 && !tokenCadastro && (
-            <View style={styles.strengthContainer}>
-              <View style={styles.strengthBarBg}>
-                <View 
-                  style={[
-                    styles.strengthBarFill, 
-                    { width: getStrengthWidth(), backgroundColor: getStrengthColor() }
-                  ]} 
+            <View style={{ marginTop: -8, marginBottom: dimensions.fieldSpacing }}>
+              <View
+                style={{
+                  height: 6,
+                  width: '100%',
+                  backgroundColor: '#E5E7EB',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                }}
+              >
+                <View
+                  style={{
+                    height: '100%',
+                    width: getStrengthWidth(),
+                    backgroundColor: getStrengthColor(),
+                  }}
                 />
               </View>
-              <View style={styles.strengthTextRow}>
-                <Text style={[styles.strengthText, { color: getStrengthColor() }]}>
-                   Força: {forcaSenha.charAt(0).toUpperCase() + forcaSenha.slice(1)}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginTop: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '600',
+                    color: getStrengthColor(),
+                  }}
+                >
+                  Força: {forcaSenha.charAt(0).toUpperCase() + forcaSenha.slice(1)}
                 </Text>
-                {forcaSenha === "fraca" && (
-                   <Text style={styles.weakWarning}>Recomendamos senha forte</Text>
+                {forcaSenha === 'fraca' && (
+                  <Text style={{ fontSize: 10, color: '#DC2626' }}>
+                    Recomendamos senha forte
+                  </Text>
                 )}
               </View>
             </View>
           )}
 
-          {/* Confirmar Senha */}
           {!tokenCadastro && (
-            <View style={[styles.passwordContainer, erro && styles.borderError]}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#F5F5F5',
+                borderColor: erro && !confirmarSenha ? '#DC2626' : 'transparent',
+                borderWidth: erro && !confirmarSenha ? 1 : 0,
+                borderRadius: 12,
+                marginBottom: dimensions.fieldSpacing,
+              }}
+            >
               <TextInput
                 ref={confRef}
                 placeholder="Confirmar senha"
                 placeholderTextColor="#666"
-                style={styles.inputPassword}
+                style={{
+                  flex: 1,
+                  paddingHorizontal: 16,
+                  paddingVertical: dimensions.inputPadding,
+                  fontSize: dimensions.inputFontSize,
+                  color: '#000',
+                }}
                 value={confirmarSenha}
                 onChangeText={setConfirmarSenha}
                 secureTextEntry={!showConfirmar}
@@ -295,226 +459,80 @@ export default function Cadastro() {
                 returnKeyType="send"
                 onSubmitEditing={handleSubmit}
               />
-              <TouchableOpacity onPress={() => setShowConfirmar(!showConfirmar)} style={styles.eyeIcon}>
-                <Image 
-                  source={showConfirmar ? olhoAberto : olhoFechado} 
-                  style={styles.iconImage} 
-                />
+              <TouchableOpacity
+                onPress={() => setShowConfirmar(!showConfirmar)}
+                style={{ padding: 14 }}
+              >
+                {showConfirmar ? (
+                  <OlhoAberto width={dimensions.iconSize} height={dimensions.iconSize} />
+                ) : (
+                  <OlhoFechado width={dimensions.iconSize} height={dimensions.iconSize} />
+                )}
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Link Já tem conta */}
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>Já tem uma conta? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-              <Text style={styles.linkText}>Entre aqui</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Botão Entrar / Enviar */}
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={{
+              backgroundColor: '#AE0000',
+              height: dimensions.buttonHeight,
+              width: '75%',
+              alignSelf: 'center',
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#AE0000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.25,
+              shadowRadius: 6,
+              elevation: 4,
+              opacity: loading ? 0.7 : 1,
+            }}
             onPress={handleSubmit}
             disabled={loading}
           >
-             {loading ? (
-               <ActivityIndicator color="#FFF" />
-             ) : (
-               <Text style={styles.buttonText}>{tokenCadastro ? "Verificar" : "Entrar"}</Text>
-             )}
+            {loading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text
+                style={{
+                  color: '#FFF',
+                  fontSize: dimensions.buttonFontSize,
+                  fontWeight: '700',
+                }}
+              >
+                {tokenCadastro ? 'Verificar' : 'Começar'}
+              </Text>
+            )}
           </TouchableOpacity>
-        </View>
 
-        {/* Modal de OTP */}
-        {openOtp && (
-          <ModalCodigoVerificacao
-            isOpen={openOtp}
-            token={tokenCadastro}
-            length={6}
-            onClose={() => setOpenOtp(false)}
-            onSuccess={() => {
-              setOpenOtp(false);
-              navigation.navigate("Login");
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginTop: dimensions.fieldSpacing,
             }}
-          />
-        )}
+          >
+            <Text style={{ fontSize: 14, color: '#000' }}>Já tem uma conta? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: '#2563EB',
+                  textDecorationLine: 'underline',
+                  fontWeight: '600',
+                }}
+              >
+                Entre aqui
+              </Text>
+            </TouchableOpacity>
+          </View>
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 30,
-  },
-  waveContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: width,
-    height: 250, 
-    zIndex: -1,
-  },
-  waveImage: {
-    width: "100%",
-    height: "100%",
-  },
-  logoContainer: {
-    position: "absolute",
-    top: Platform.OS === 'ios' ? 60 : 40,
-    left: 20,
-    zIndex: 10,
-  },
-  logo: {
-    width: 90,
-    height: 45,
-  },
-  card: {
-    width: "90%",
-    maxWidth: 400,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 6,
-    marginTop: 80, // Distância do topo
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 20,
-    color: "#000",
-    lineHeight: 28,
-  },
-  titleHighlight: {
-    color: "#000",
-    fontWeight: "bold",
-  },
-  errorText: {
-    color: "#DC2626",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  successText: {
-    color: "#16A34A",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D1D5DB",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12, // Altura confortável para o dedo
-    fontSize: 16,
-    color: "#000",
-    marginBottom: 16,
-  },
-  inputError: {
-    borderColor: "#DC2626",
-  },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D1D5DB",
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  borderError: {
-    borderColor: "#DC2626",
-  },
-  inputPassword: {
-    flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#000",
-  },
-  eyeIcon: {
-    padding: 12,
-  },
-  iconImage: {
-    width: 20,
-    height: 20,
-    tintColor: "#4B5563",
-  },
-  strengthContainer: {
-    marginTop: -8,
-    marginBottom: 16,
-  },
-  strengthBarBg: {
-    height: 6,
-    width: "100%",
-    backgroundColor: "#E5E7EB",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  strengthBarFill: {
-    height: "100%",
-  },
-  strengthTextRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  strengthText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  weakWarning: {
-    fontSize: 10,
-    color: "#DC2626",
-    alignSelf: "center",
-  },
-  footerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  footerText: {
-    fontSize: 14,
-    color: "#000",
-  },
-  linkText: {
-    fontSize: 14,
-    color: "#2563EB",
-    textDecorationLine: "underline",
-    fontWeight: "bold",
-  },
-  button: {
-    backgroundColor: "#AE0000",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    shadowColor: "#AE0000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
+export default Cadastro;

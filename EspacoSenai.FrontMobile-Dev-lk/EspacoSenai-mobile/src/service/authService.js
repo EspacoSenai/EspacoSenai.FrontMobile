@@ -12,7 +12,7 @@ export async function signIn(payload) {
 
         const { token, user } = response.data;
 
-        // Salvar token no AsyncStorage
+        // Salvar token 
         if (token) {
             await AsyncStorage.setItem("userToken", token);
         }
@@ -80,5 +80,38 @@ export async function signOut() {
     } catch (error) {
         console.error("Erro ao fazer logout:", error);
         throw error;
+    }
+}
+
+/**
+ * Realiza o cadastro de um novo usuário e retorna o token de verificação enviado pelo backend.
+ * @param {Object} payload
+ * @returns {Promise<Object>}
+ */
+export async function signUpUsuario(payload) {
+    try {
+        const response = await api.post("/auth/signup", payload);
+        return response.data || {};
+    } catch (error) {
+        console.error("Erro no signUpUsuario:", error?.response?.data || error);
+        const message = error?.response?.data?.message || error?.message || "Não foi possível realizar o cadastro.";
+        throw new Error(message);
+    }
+}
+
+/**
+ * Confirma a conta do usuário utilizando o token retornado no cadastro e o código digitado.
+ * @param {string} token
+ * @param {string} codigo
+ * @returns {Promise<Object>}
+ */
+export async function confirmarConta(token, codigo) {
+    try {
+        const response = await api.post("/auth/confirmar-codigo", { token, codigo });
+        return response.data || {};
+    } catch (error) {
+        console.error("Erro no confirmarConta:", error?.response?.data || error);
+        const message = error?.response?.data?.message || error?.message || "Não foi possível confirmar o cadastro.";
+        throw new Error(message);
     }
 }

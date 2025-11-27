@@ -4,8 +4,6 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    Image,
-    StyleSheet,
     ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
@@ -40,28 +38,34 @@ export default function Login() {
         const isSmallScreen = width < 360;
         const isTinyScreen = width < 340;
 
+        const waveHeight = isTinyScreen
+            ? Math.min(height * 0.28, 200)
+            : isSmallScreen
+                ? Math.min(height * 0.32, 240)
+                : Math.min(height * 0.35, 280);
+
         return {
             width,
             height,
             // Tamanhos responsivos do logo - reduzido para telas pequenas
             logoWidth: isTinyScreen
-                ? Math.max(width * 0.22, 70)
-                : Math.min(Math.max(width * 0.25, 80), 120),
+                ? Math.max(width * 0.34, 100)
+                : Math.min(Math.max(width * 0.42, 135), 190),
             logoHeight: isTinyScreen
-                ? Math.max(width * 0.22, 70) * 0.5
-                : Math.min(Math.max(width * 0.25, 80), 120) * 0.5,
-            waveHeight: isTinyScreen
-                ? Math.min(height * 0.28, 200)
-                : isSmallScreen
-                    ? Math.min(height * 0.32, 240)
-                    : Math.min(height * 0.35, 280),
+                ? Math.max(width * 0.34, 100) * 0.5625
+                : Math.min(Math.max(width * 0.42, 135), 190) * 0.5625,
+            logoTop: Platform.OS === "ios"
+                ? (isTinyScreen ? Math.max(height * 0.03, 24) : Math.max(height * 0.05, 40))
+                : (isTinyScreen ? Math.max(height * 0.025, 20) : Math.max(height * 0.04, 32)),
+            waveHeight,
+            waveOffset: isTinyScreen
+                ? -Math.max(height * 0.05, 24)
+                : -Math.max(height * 0.06, 40),
             // Tamanho do card - padding menor em telas pequenas
             cardPadding: isTinyScreen
                 ? Math.max(width * 0.045, 15)
                 : Math.max(width * 0.06, 18),
-            cardMarginTop: isSmallScreen
-                ? height * 0.10
-                : height * 0.12,
+            cardMarginTop: Math.max(waveHeight * 0.55, height * 0.18),
             // Tamanhos de fonte - ajustados para legibilidade
             titleSize: isTinyScreen
                 ? Math.max(width * 0.055, 18)
@@ -76,6 +80,8 @@ export default function Login() {
             iconSize: isTinyScreen
                 ? 18
                 : Math.min(width * 0.055, 22),
+            buttonHeight: isTinyScreen ? 22 : 38,
+            buttonFontSize: isTinyScreen ? 14 : 15,
         };
     }, []);
 
@@ -159,33 +165,121 @@ export default function Login() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.container}
+            style={{
+                flex: 1,
+                backgroundColor: "#FFFFFF",
+            }}
         >
             <ScrollView
-                contentContainerStyle={[styles.scrollContent, { minHeight: dimensions.height }]}
+                contentContainerStyle={{
+                    flexGrow: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    paddingBottom: 20,
+                    minHeight: dimensions.height,
+                }}
                 showsVerticalScrollIndicator={false}
-                bounces={true}
+                bounces
             >
-                {/* Imagem de Fundo / Onda */}
-                <View style={[styles.waveContainer, { height: dimensions.waveHeight }]}>
-                    <OndaMobile width={dimensions.width} height={dimensions.waveHeight} />
+                <View
+                    style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        alignItems: "center",
+                        zIndex: 0,
+                        overflow: "hidden",
+                        height: dimensions.waveHeight,
+                        top: dimensions.waveOffset,
+                    }}
+                >
+                    <OndaMobile
+                        width={dimensions.width * 1.1}
+                        height={dimensions.waveHeight}
+                        preserveAspectRatio="xMidYMid slice"
+                    />
                 </View>
 
-                {/* Logo */}
-                <View style={[styles.logoContainer, { top: dimensions.height * 0.05 }]}>
-                    <Logo width={dimensions.logoWidth} height={dimensions.logoHeight} preserveAspectRatio="xMidYMid meet" />
+                <View
+                    style={{
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        alignItems: "center",
+                        zIndex: 10,
+                        top: dimensions.logoTop,
+                    }}
+                >
+                    <Logo
+                        width={dimensions.logoWidth}
+                        height={dimensions.logoHeight}
+                        preserveAspectRatio="xMidYMid meet"
+                    />
                 </View>
 
-                {/* Card de Login */}
-                <View style={[styles.card, { padding: dimensions.cardPadding, marginTop: dimensions.cardMarginTop }]}>
-                    <Text style={[styles.title, { fontSize: dimensions.titleSize }]}>Bem-Vindo(a)</Text>
-                    <Text style={[styles.subtitle, { fontSize: dimensions.subtitleSize }]}>novamente!</Text>
+                <View
+                    style={{
+                        width: "90%",
+                        maxWidth: 400,
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                        borderRadius: 12,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4.65,
+                        elevation: 8,
+                        padding: dimensions.cardPadding,
+                        marginTop: dimensions.cardMarginTop,
+                    }}
+                >
+                    <Text
+                        style={{
+                            fontWeight: "600",
+                            textAlign: "center",
+                            color: "#000",
+                            fontSize: dimensions.titleSize,
+                        }}
+                    >
+                        Bem-Vindo(a)
+                    </Text>
 
-                    {!!erro && <Text style={styles.errorText}>{erro}</Text>}
+                    <Text
+                        style={{
+                            fontWeight: "500",
+                            textAlign: "center",
+                            marginBottom: 24,
+                            color: "#000",
+                            fontSize: dimensions.subtitleSize,
+                        }}
+                    >
+                        novamente!
+                    </Text>
 
-                    {/* Input Email/Identificador */}
+                    {!!erro && (
+                        <Text
+                            style={{
+                                color: "#DC2626",
+                                textAlign: "center",
+                                fontSize: 14,
+                                marginBottom: 12,
+                            }}
+                        >
+                            {erro}
+                        </Text>
+                    )}
+
                     <TextInput
-                        style={[styles.input, { fontSize: dimensions.inputFontSize }]}
+                        style={{
+                            backgroundColor: "#FFFFFF",
+                            borderColor: "#D1D5DB",
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            paddingHorizontal: 12,
+                            paddingVertical: 12,
+                            marginBottom: 16,
+                            color: "#000",
+                            fontSize: dimensions.inputFontSize,
+                        }}
                         placeholder="Email"
                         placeholderTextColor="#6B7280"
                         value={identificador}
@@ -194,61 +288,162 @@ export default function Login() {
                         keyboardType="email-address"
                     />
 
-                    {/* Input Senha */}
-                    <View style={styles.passwordContainer}>
+                    <View
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            backgroundColor: "#FFFFFF",
+                            borderColor: "#D1D5DB",
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            marginBottom: 16,
+                        }}
+                    >
                         <TextInput
-                            style={[styles.inputPassword, { fontSize: dimensions.inputFontSize }]}
+                            style={{
+                                flex: 1,
+                                paddingHorizontal: 12,
+                                paddingVertical: 12,
+                                color: "#000",
+                                fontSize: dimensions.inputFontSize,
+                            }}
                             placeholder="Senha"
                             placeholderTextColor="#6B7280"
                             value={senha}
                             onChangeText={setSenha}
                             secureTextEntry={!showSenha}
                         />
+
                         <TouchableOpacity
                             onPress={() => setShowSenha(!showSenha)}
-                            style={styles.eyeIcon}
+                            style={{ padding: 10 }}
                         >
                             {showSenha ? (
-                                <OlhoAberto width={dimensions.iconSize} height={dimensions.iconSize} />
+                                <OlhoAberto
+                                    width={dimensions.iconSize}
+                                    height={dimensions.iconSize}
+                                />
                             ) : (
-                                <OlhoFechado width={dimensions.iconSize} height={dimensions.iconSize} />
+                                <OlhoFechado
+                                    width={dimensions.iconSize}
+                                    height={dimensions.iconSize}
+                                />
                             )}
                         </TouchableOpacity>
                     </View>
 
-                    {/* Link Esqueci Senha */}
                     <TouchableOpacity
-                        style={styles.forgotPassContainer}
+                        style={{
+                            alignItems: "flex-end",
+                            marginBottom: 16,
+                        }}
                         onPress={() => navigation.navigate("EsqueciSenha")}
                     >
-                        <Text style={styles.forgotPassText}>Esqueceu a Senha?</Text>
+                        <Text
+                            style={{
+                                color: "#DC2626",
+                                fontSize: 12,
+                                textDecorationLine: "underline",
+                            }}
+                        >
+                            Esqueceu a Senha?
+                        </Text>
                     </TouchableOpacity>
 
-                    {/* Divisor "ou" */}
-                    <View style={styles.dividerContainer}>
-                        <View style={styles.line} />
-                        <Text style={styles.orText}>ou</Text>
-                        <View style={styles.line} />
+                    <View
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            marginBottom: 16,
+                        }}
+                    >
+                        <View
+                            style={{
+                                flex: 1,
+                                height: 1,
+                                backgroundColor: "#D1D5DB",
+                            }}
+                        />
+                        <Text
+                            style={{
+                                marginHorizontal: 8,
+                                color: "#6B7280",
+                                fontSize: 14,
+                            }}
+                        >
+                            ou
+                        </Text>
+                        <View
+                            style={{
+                                flex: 1,
+                                height: 1,
+                                backgroundColor: "#D1D5DB",
+                            }}
+                        />
                     </View>
 
-                    {/* Botão Login */}
                     <TouchableOpacity
-                        style={[styles.button, loading && styles.buttonDisabled]}
+                        style={{
+                            backgroundColor: "#AE0000",
+                            height: dimensions.buttonHeight,
+                            width: "75%",
+                            alignSelf: "center",
+                            borderRadius: 10,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            shadowColor: "#AE0000",
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 6,
+                            elevation: 4,
+                            opacity: loading ? 0.7 : 1,
+                        }}
                         onPress={handleSubmit}
                         disabled={loading}
                     >
                         {loading ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
-                            <Text style={styles.buttonText}>Entrar</Text>
+                            <Text
+                                style={{
+                                    color: "#FFFFFF",
+                                    fontWeight: "bold",
+                                    fontSize: dimensions.buttonFontSize,
+                                }}
+                            >
+                                Entrar
+                            </Text>
                         )}
                     </TouchableOpacity>
 
-                    {/* Footer Cadastro */}
-                    <View style={styles.footerContainer}>
-                        <Text style={styles.footerText}>Não tem uma conta? </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate("Cadastro")}>
-                            <Text style={styles.linkText}>Cadastre-se</Text>
+                    <View
+                        style={{
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            marginTop: 16,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                fontSize: 12,
+                                color: "#000",
+                            }}
+                        >
+                            Não tem uma conta? 
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate("Cadastro")}
+                        >
+                            <Text
+                                style={{
+                                    fontSize: 12,
+                                    color: "#2563EB",
+                                    textDecorationLine: "underline",
+                                }}
+                            >
+                                Cadastre-se
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -256,141 +451,3 @@ export default function Login() {
         </KeyboardAvoidingView>
     );
 }
-
-// Estilos
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#FFFFFF",
-    },
-    scrollContent: {
-        flexGrow: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingBottom: 20,
-    },
-    waveContainer: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: -1,
-    },
-    logoContainer: {
-        position: "absolute",
-        left: 24,
-        zIndex: 10,
-    },
-    card: {
-        width: "90%",
-        maxWidth: 400,
-        backgroundColor: "rgba(255, 255, 255, 0.95)",
-        borderRadius: 12,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4.65,
-        elevation: 8,
-    },
-    title: {
-        fontWeight: "600",
-        textAlign: "center",
-        color: "#000",
-    },
-    subtitle: {
-        fontWeight: "500",
-        textAlign: "center",
-        marginBottom: 24,
-        color: "#000",
-    },
-    errorText: {
-        color: "#DC2626",
-        textAlign: "center",
-        fontSize: 14,
-        marginBottom: 12,
-    },
-    input: {
-        backgroundColor: "#FFFFFF",
-        borderColor: "#D1D5DB",
-        borderWidth: 1,
-        borderRadius: 6,
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        marginBottom: 16,
-        color: "#000",
-    },
-    passwordContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#FFFFFF",
-        borderColor: "#D1D5DB",
-        borderWidth: 1,
-        borderRadius: 6,
-        marginBottom: 16,
-    },
-    inputPassword: {
-        flex: 1,
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        color: "#000",
-    },
-    eyeIcon: {
-        padding: 10,
-    },
-    forgotPassContainer: {
-        alignItems: "flex-end",
-        marginBottom: 16,
-    },
-    forgotPassText: {
-        color: "#DC2626",
-        fontSize: 12,
-        textDecorationLine: "underline",
-    },
-    dividerContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    line: {
-        flex: 1,
-        height: 1,
-        backgroundColor: "#D1D5DB",
-    },
-    orText: {
-        marginHorizontal: 8,
-        color: "#6B7280",
-        fontSize: 14,
-    },
-    button: {
-        backgroundColor: "#AE0000",
-        paddingVertical: 12,
-        borderRadius: 6,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    buttonDisabled: {
-        opacity: 0.6,
-    },
-    buttonText: {
-        color: "#FFFFFF",
-        fontWeight: "bold",
-        fontSize: 16,
-    },
-    footerContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        marginTop: 16,
-    },
-    footerText: {
-        fontSize: 12,
-        color: "#000",
-    },
-    linkText: {
-        fontSize: 12,
-        color: "#2563EB",
-        textDecorationLine: "underline",
-    },
-});

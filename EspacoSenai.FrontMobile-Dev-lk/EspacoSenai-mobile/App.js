@@ -6,6 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Importação das telas
 import SelecaoPerfil from './src/screens/selecaoperfil/selecaoperfil';
 import Login from './src/screens/login/login';
+import Cadastro from './src/screens/cadastro/cadastro';
+import ModalCodigoVerificacaoScreen from './src/screens/cadastro/ModalCodigoVerificacaoScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +31,17 @@ export default function App() {
                 <Stack.Screen
                     name="Login"
                     component={Login}
+                />
+
+                <Stack.Screen
+                    name="Cadastro"
+                    component={Cadastro}
+                />
+
+                <Stack.Screen
+                    name="ModalCodigoVerificacao"
+                    component={ModalCodigoVerificacaoScreen}
+                    options={{ presentation: 'transparentModal' }}
                 />
             </Stack.Navigator>
         </NavigationContainer>
