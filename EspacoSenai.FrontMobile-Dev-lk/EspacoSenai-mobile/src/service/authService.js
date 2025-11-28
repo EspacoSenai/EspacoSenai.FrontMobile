@@ -115,3 +115,69 @@ export async function confirmarConta(token, codigo) {
         throw new Error(message);
     }
 }
+
+/**
+ * Solicita o envio do código de redefinição de senha e armazena o token retornado
+ * @param {string} identificador
+ * @returns {Promise<Object>}
+ */
+export async function solicitarCodigoRedefinicao(identificador) {
+    try {
+        const response = await api.post("/auth/redefinir-senha", { identificador });
+        const data = response.data || {};
+
+        if (data?.token) {
+            await AsyncStorage.setItem("tokenRedefinirSenha", data.token);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Erro no solicitarCodigoRedefinicao:", error?.response?.data || error);
+        const message = error?.response?.data?.message || error?.message || "Não foi possível enviar o código.";
+        throw new Error(message);
+    }
+}
+
+/**
+ * Valida o código enviado para redefinição de senha.
+ * @param {string} token
+ * @param {string} codigo
+ * @returns {Promise<Object>}
+ */
+export async function validarCodigoRedefinicao(token, codigo) {
+    try {
+        const endpoint = `/auth/redefinir-senha/validar-codigo/${encodeURIComponent(token)}/${encodeURIComponent(codigo)}`;
+        const response = await api.get(endpoint);
+        return response.data || {};
+    } catch (error) {
+        console.error("Erro no validarCodigoRedefinicao:", error?.response?.data || error);
+        const message = error?.response?.data?.message || error?.message || "Não foi possível validar o código.";
+        throw new Error(message);
+    }
+}
+
+/**
+ * Define uma nova senha utilizando o token de redefinição.
+ * @param {string} token
+ * @param {string} novaSenha
+ * @returns {Promise<Object>}
+ */
+export async function redefinirNovaSenha(token, novaSenha) {
+    if (!token) {
+        throw new Error("Sessão expirada. Volte para 'Esqueci a senha' e solicite um novo código.");
+    }
+
+    try {
+        const endpoint = `/auth/redefinir-senha/nova-senha/${encodeURIComponent(token)}`;
+        const response = await api.post(endpoint, { novaSenha });
+
+        // token não é mais necessário após sucesso
+        await AsyncStorage.removeItem("tokenRedefinirSenha");
+
+        return response.data || {};
+    } catch (error) {
+        console.error("Erro no redefinirNovaSenha:", error?.response?.data || error);
+        const message = error?.response?.data?.message || error?.message || "Não foi possível redefinir a senha.";
+        throw new Error(message);
+    }
+}

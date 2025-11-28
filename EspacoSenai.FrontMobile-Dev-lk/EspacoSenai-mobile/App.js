@@ -8,6 +8,10 @@ import SelecaoPerfil from './src/screens/selecaoperfil/selecaoperfil';
 import Login from './src/screens/login/login';
 import Cadastro from './src/screens/cadastro/cadastro';
 import ModalCodigoVerificacaoScreen from './src/screens/cadastro/ModalCodigoVerificacaoScreen';
+import EsqueciSenha from './src/screens/senhas/esquecisenha';
+import CodigoRecuperacao from './src/screens/senhas/códigorecuperacao';
+import NovaSenha from './src/screens/senhas/novasenha';
+import TelaCarregamento from './src/screens/autenticação/telacarregamento';
 
 const Stack = createNativeStackNavigator();
 
@@ -15,12 +19,18 @@ export default function App() {
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName="SelecionarPerfil"
+                initialRouteName="TelaCarregamento"
                 screenOptions={{
                     headerShown: false,  
                     animation: 'slide_from_right', 
                 }}
             >
+                <Stack.Screen
+                    name="TelaCarregamento"
+                    component={TelaCarregamento}
+                    options={{ animation: 'fade' }}
+                />
+
                 {/* Tela de Seleção de Perfil */}
                 <Stack.Screen
                     name="SelecionarPerfil"
@@ -31,6 +41,21 @@ export default function App() {
                 <Stack.Screen
                     name="Login"
                     component={Login}
+                />
+
+                <Stack.Screen
+                    name="EsqueciSenha"
+                    component={EsqueciSenha}
+                />
+
+                <Stack.Screen
+                    name="CodigoRedefinirSenha"
+                    component={CodigoRecuperacao}
+                />
+
+                <Stack.Screen
+                    name="NovaSenha"
+                    component={NovaSenha}
                 />
 
                 <Stack.Screen
