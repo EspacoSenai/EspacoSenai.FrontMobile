@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Espaço Senai",
+    "slug": "EspacoSenai",
+    "scheme": "espacosenai",
+    "version": "1.0.0",
+    "devServer": {
+      "port": 5173,
+      "webPort": 5173
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a9bd4283-889c-4997-a058-2698fcbf4905"
+      }
+    },
+    "android": {
+      "package": "com.mr_cat.Calygam"
+    }
+  }
+}
