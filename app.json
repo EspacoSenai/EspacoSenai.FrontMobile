@@ -3,6 +3,7 @@
     "name": "Espaço Senai",
     "slug": "EspacoSenai",
     "scheme": "espacosenai",
+    "owner": "lucasdeveloperx",
     "version": "1.0.0",
     "devServer": {
       "port": 5173,
@@ -10,11 +11,8 @@
     },
     "extra": {
       "eas": {
-        "projectId": "a9bd4283-889c-4997-a058-2698fcbf4905"
+        "projectId": "a4322dd7-b95b-4499-9db0-c9892bcca561"
       }
-    },
-    "android": {
-      "package": "com.mr_cat.Calygam"
     }
   }
 }
